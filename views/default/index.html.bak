@@ -1,0 +1,211 @@
+{{extend 'layout.html'}}
+
+{{block head}}
+<style>
+#additem {
+  vertical-align: top;
+}
+
+#completeorder {
+     position : relative;
+     bottom : -40px;
+}
+#orderlist ul li{
+     display: inline;
+     margin: 30px;
+}
+    
+#ordertotal{
+     position:relative;
+     left :500px
+}
+#productlist{
+    position : relative;
+    bottom: 10px;
+    width: 100px;
+    margin: 0px;
+    width: 300px;
+    padding: 5px;
+    border-style: solid;
+    border-width: 2px;
+    list-style-type: none;
+    box-shadow: 10px 10px 5px #888888;
+}
+    
+#main-box-orders{
+    background-color: #E8E8E8 ;
+    box-shadow: 10px 10px 5px #888888;
+}
+    
+#main-box-lineitems{
+    background-color: #E8E8E8 ;
+    box-shadow: 10px 10px 5px #888888;
+}
+#linelist{
+    list-style-type:none;
+}
+
+#linelist ul{
+     padding:5px;
+     border-style: solid;
+     border-width:1px;
+}
+#linelist ul li{
+    display:inline;
+    margin:100px;
+    text-align: center;
+}
+
+    
+    
+#product{
+    color:black;
+}
+    
+#totalprice{
+    width: 500px;
+}
+  
+</style>
+<script>
+$(document).ready(function() {
+   var ordernum =0;
+   var ordertotal=0.0;
+   $("#productlist").hide();
+   $("#main-box-lineitems").hide();
+
+   
+  //Add  order
+  $("#addorder").click(function() {
+  jQuery.ajax({method:'post',url:'{{=URL('add_order')}}',
+                 data:{},
+                success: function(data){
+                ordernum=data;
+               } 
+    });
+     ordertotal =0.0;
+     $("#main-box-lineitems").show();
+     $("#addorder").hide();
+
+  });
+  //Complete order
+  $("#completeorder").click(function() {    
+   jQuery.ajax({method:'post',url:'{{=URL('complete_order')}}',
+                data:{ordertotal:ordertotal,
+                ordernum:ordernum },
+                success: function(data){
+                $("#orderlist").append("<ul>" + "<li>" + ordernum +"</li>"+
+                        "<li>" + data +"</li>"+
+                        "<li>"  + ordertotal +"</li>" + "</ul>");
+                  }});
+     $("#main-box-lineitems").hide();
+     $("#addorder").show();
+
+  });
+    
+  // Add lineitem actions  
+   $("#additem").click(function() {
+  	var newitem = $("#newitem").val();
+    var numitem = $("#numitem").val();
+    var totalprice = $("#totalprice").val();
+
+    $("#linelist").append("<ul>" + "<li>" + newitem +"</li>"+
+                        "<li>" + numitem +"</li>"+
+                        "<li>"  + totalprice +"</li>" + "</ul>");
+    ordertotal = parseFloat(totalprice) + ordertotal;
+    $("#ordertotal").val(ordertotal);
+    jQuery.ajax({method:'post',url:'{{=URL('add_item')}}',
+                 data:{'newitem': newitem, 'numitem': numitem,
+                       'totalprice':totalprice,
+                        'ordernum' :ordernum},
+                success: function(){} });
+  
+  	$("#newitem").val("");
+    $("#numitem").val("");
+    $("#itemprice").val(0.0);
+    $("#totalprice").val(0.0);
+  });
+    
+    //Display Pricing   
+    $( "#numitem" ).keyup(function() {
+      var itemprice = $("#itemprice").val();
+      var numitem =  $(this).val() ;
+      var total = itemprice*numitem;
+      $("#totalprice").val(total);
+    });
+
+    //Drop Down
+    $( "#newitem" ).mouseenter(function(){
+         $("#productlist").show();
+    });
+    
+     $( "#productlist" ).mouseleave(function(){
+        $("#productlist").hide();
+     });
+
+     $("#productlist li").hover(function() {
+       $(this).css('background-color','#E0FFFF');
+     });
+    
+     $("#productlist li").mouseout(function() {
+       $(this).css('background-color','#E8E8E8');
+     });
+    
+    $("#productlist li").click(function() {
+       var choosen = $(this).text();
+       $("#newitem").val(choosen);
+        ajax('{{=URL('get_price')}}+"?choosen=' + choosen,[],'itemprice');
+     });
+    
+    
+    
+    
+    
+});
+</script>
+{{end}}
+
+<div id="main-box-orders">
+<h3>Orders  <button id="addorder" class="btn">Create Order</button> 
+</h3>
+    
+<ul id="orderlist">
+     {{for order in orders:}}
+     <ul>
+         <li>{{=order.id}}</li> 
+         <li>{{=order.time}}</li> 
+         <li>{{=order.total}}</li> 
+      </ul>
+     {{pass}}
+</ul>
+
+
+</div>
+
+<div id="main-box-lineitems">
+<h3>Line Items</h3>
+<div id="linelist">
+    <ul>
+     <li id>Product Name</li>
+     <li id>Quantity</li>
+     <li id>Total</li>
+    </ul>
+</div>
+
+<div>
+<input  name= "newitem" id="newitem"  type="text" class="text" />
+<input  name= "numitem" id="numitem" type="text" class="text"/>
+<output name= "itemprice" id="itemprice" type="text" class="text"/> 0.0 </output>
+<output name= "totalprice" id="totalprice" type="number"/> 0.0 </output>
+<button id="additem" class="btn">+</button> 
+ <ul id="productlist">
+     {{for product in products:}}
+     <li id="product">{{=product.name}} </li> 
+     {{pass}}
+ </ul>
+
+</div>
+<button id="completeorder" class="btn">Complete Order</button> 
+<output id="ordertotal" type=number> 0.0</output> 
+
+</div>

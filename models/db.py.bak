@@ -1,0 +1,56 @@
+from random import randint
+db = DAL("sqlite://storage.sqlite",adapter_args=dict(foreign_keys=False))
+#ITEM
+db.define_table('item',
+    Field('name','string'),
+    Field('price', 'double'),
+    format = '%(name)')
+
+
+#PERSON
+db.define_table('person',
+   Field('name','string'),
+   Field('phone','string'),
+   Field('email','string'))
+
+
+#PRODUCT
+db.define_table('product',
+    Field('name','reference item'),
+    Field('quantity_store','integer'),
+    Field('quantity_sup', 'integer'),
+    format ='%(name)s')
+
+#CONTACTS
+db.define_table('contact',db.person,
+   Field('description', 'string'),
+   format ='%(name)s')
+
+#SUPPLIER
+db.define_table('supplier',
+    Field('name','string'),
+    Field('address','string'),
+    Field('contacts','list:reference db.contact')
+)
+
+
+#PURCHASE
+db.define_table( 'purchase',
+    Field('trans_date','date'),
+    Field('quantity','integer'),
+    Field('products', 'list:reference db.item'),
+    Field.Virtual('total_price',lambda row: row.purchase.products.price*row.purchase.quantity),
+      format='%(trans_date)s'
+)
+
+#CUSTOMER
+db.define_table( 'customer', db.person,
+   Field('purchases','list:reference db.purchase'),
+   format='%(name)'
+)
+
+#REQUIREMENTS
+db.purchase.products.requires= IS_IN_DB(db,'item.id','%(name)s',multiple=False)
+db.product.name.requires=IS_IN_DB(db,'item.id','%(name)s',multiple=False)
+db.supplier.contacts.requires= IS_IN_DB(db,'contact.id','%(name)s',multiple=True)
+db.customer.purchases.requires=IS_IN_DB(db, 'purchase.id','%(trans_date)s', multiple=True)

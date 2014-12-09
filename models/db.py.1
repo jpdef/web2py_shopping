@@ -1,0 +1,58 @@
+from random import randint
+db = DAL("sqlite://storage.sqlite")
+
+#PRODUCT
+db.define_table('product',
+    Field('product_id','integer',default=randint(0,100)),
+    Field('name','string'),
+    Field('quantity_is','integer'),
+    Field('price', 'double'),
+    Field('quantity_sup', 'integer'),
+    format ='%(name)s'
+)
+
+#CONTACTS
+db.define_table('contact',
+   Field('contact_id','integer'),
+   Field('name','string'),
+   Field('phone','string'),
+   Field('email','string'),
+   Field('description', 'string'),
+   format ='%(title)s')
+
+#SUPPLIER
+db.define_table('supplier',
+    Field('name','string'),
+    Field('address','string'),
+    Field('contact','list:reference db.contact')
+)
+
+
+#PURCHASE
+db.define_table(
+   'purchase',
+    Field('purchase_id','integer'),
+    Field('trans_date','date'),
+    Field('products', 'list:reference db.product'),
+    Field('purchase_price','double'),
+    Field('quantity','integer'),
+    Field('total_price','double'),
+    format='%(trans_date)',
+)
+
+#CUSTOMER
+db.define_table( 'customer',
+   Field('name','string'),
+   Field('phone','string'),
+   Field('email','string'),
+   Field('purchases','list:reference db.purchase')
+)
+
+#REQUIREMENTS
+db.purchase.products.requires= IS_IN_DB(db,'product.product_id','%(name)s',multiple=True)
+db.product.product_id.readable=False;
+db.product.product_id.writable=False;
+db.supplier.contact.requires= IS_IN_DB(db,'contact.contact_id','%(name)s',multiple=True)
+db.customer.purchases.requires=IS_IN_DB(db,'purchase.purchase_id','%(trans_date)s',multiple=True)
+
+#PRE-DEFINED EXAMPLES

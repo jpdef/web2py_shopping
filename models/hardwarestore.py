@@ -1,0 +1,28 @@
+from gluon.tools import Auth
+
+db = DAL("sqlite://storage.sqlite",adapter_args=dict(foreign_keys=False))
+auth = Auth(db)
+auth.define_tables(username=True)
+
+
+#PRODUCT
+db.define_table('product',
+    Field('name','string'),
+    Field('price', 'double'))
+
+#LINEITEM
+db.define_table('lineitems',
+   Field('user_id','integer'),
+   Field('productname','string'),
+   Field('quantity','integer'),
+   Field('totalprice','double'),
+   Field('order_id','integer')
+)
+
+
+#ORDER
+db.define_table('orders',
+    Field('time','datetime'),
+    Field('total', 'double'),
+    Field('user_id','integer')
+    )
